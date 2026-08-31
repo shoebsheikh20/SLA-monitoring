@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: sla-pulse
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npm run build && npm run seed
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        value: "file:./dev.db"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: SIMULATOR_INTERVAL_MS
+        value: 30000
+      - key: DATA_RETENTION_DAYS
+        value: 30
