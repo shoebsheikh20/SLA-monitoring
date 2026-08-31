@@ -1,0 +1,98 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Service {
+  id                   String    @id @default(cuid())
+  name                 String
+  description          String
+  url                  String
+  environment          String    @default("production")
+  region               String    @default("us-east-1")
+  status               String    @default("healthy")
+  slaTarget            Float     @default(99.9)
+  latencyThreshold     Int       @default(500)
+  pageLoadThreshold    Float     @default(2.0)
+  errorRateThreshold   Float     @default(1.0)
+  monitoringEnabled    Boolean   @default(true)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  metrics              Metric[]
+  incidents            Incident[]
+  alerts               Alert[]
+  slaConfig            SLAConfig?
+}
+
+model Metric {
+  id           String   @id @default(cuid())
+  serviceId    String
+  latency      Float
+  pageLoadTime Float
+  uptime       Float
+  errorRate    Float
+  timestamp    DateTime @default(now())
+
+  service      Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId, timestamp])
+}
+
+model Incident {
+  id          String    @id @default(cuid())
+  serviceId   String
+  severity    String    @default("medium")
+  title       String
+  description String
+  status      String    @default("open")
+  slaImpact   Float     @default(0)
+  notes       String    @default("")
+  startedAt   DateTime  @default(now())
+  resolvedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  service     Service   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}
+
+model Alert {
+  id        String   @id @default(cuid())
+  serviceId String
+  severity  String   @default("info")
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([isRead, createdAt])
+}
+
+model SLAConfig {
+  id                String  @id @default(cuid())
+  serviceId         String  @unique
+  availabilitySLA   Float   @default(99.9)
+  responseTimeSLA   Int     @default(500)
+  pageLoadSLA       Float   @default(2.0)
+  errorRateSLA      Float   @default(1.0)
+
+  service           Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}
