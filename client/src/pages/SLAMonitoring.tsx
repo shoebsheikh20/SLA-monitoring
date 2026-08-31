@@ -84,7 +84,8 @@ export default function SLAMonitoring() {
   const fetchData = useCallback(async () => {
     try {
       const res = await slaService.getSLAStatus();
-      setSlaData(res.slaData);
+      const list = res?.slaData || (res as unknown as { slaStatuses: SLAStatus[] })?.slaStatuses || [];
+      setSlaData(Array.isArray(list) ? list : []);
     } catch {
       console.error('SLA fetch failed');
     } finally {
@@ -104,16 +105,18 @@ export default function SLAMonitoring() {
     if (t) t.success('SLA configuration updated');
   };
 
-  const filtered = slaData.filter((s) => {
-    const matchSearch = s.serviceName.toLowerCase().includes(search.toLowerCase());
+  const safeData = Array.isArray(slaData) ? slaData : [];
+
+  const filtered = safeData.filter((s) => {
+    const matchSearch = (s.serviceName || '').toLowerCase().includes(search.toLowerCase());
     const matchStatus = !filterStatus || s.status === filterStatus;
     return matchSearch && matchStatus;
   });
 
   const summary = {
-    healthy: slaData.filter((s) => s.status === 'healthy').length,
-    atRisk: slaData.filter((s) => s.status === 'at-risk').length,
-    breached: slaData.filter((s) => s.status === 'breached').length,
+    healthy: safeData.filter((s) => s.status === 'healthy').length,
+    atRisk: safeData.filter((s) => s.status === 'at-risk').length,
+    breached: safeData.filter((s) => s.status === 'breached').length,
   };
 
   return (
@@ -190,27 +193,27 @@ export default function SLAMonitoring() {
                       <div className="font-semibold text-text-primary">{sla.serviceName}</div>
                       <div className="text-xs text-text-muted">{sla.environment} · {sla.region}</div>
                     </td>
-                    <td className="font-mono text-sm">{sla.slaTarget}%</td>
+                    <td className="font-mono text-sm">{sla.slaTarget ?? 99.9}%</td>
                     <td>
                       <div className={`font-mono text-sm font-semibold ${sla.uptimeOk ? 'text-success' : 'text-critical'}`}>
-                        {sla.currentUptime.toFixed(3)}%
+                        {(sla.currentUptime ?? 99.9).toFixed(3)}%
                       </div>
                     </td>
                     <td>
                       <div className={`font-mono text-sm font-semibold ${sla.latencyOk ? 'text-success' : 'text-critical'}`}>
-                        {sla.currentLatency.toFixed(0)}ms
+                        {(sla.currentLatency ?? 0).toFixed(0)}ms
                       </div>
-                      <div className="text-xs text-text-muted">SLA: {sla.latencyLimit}ms</div>
+                      <div className="text-xs text-text-muted">SLA: {sla.latencyLimit ?? 200}ms</div>
                     </td>
                     <td>
                       <div className={`font-mono text-sm ${sla.pageLoadOk ? 'text-success' : 'text-critical'}`}>
-                        {sla.currentPageLoad.toFixed(2)}s
+                        {(sla.currentPageLoad ?? 0).toFixed(2)}s
                       </div>
-                      <div className="text-xs text-text-muted">SLA: {sla.pageLoadLimit}s</div>
+                      <div className="text-xs text-text-muted">SLA: {sla.pageLoadLimit ?? 1.0}s</div>
                     </td>
                     <td>
                       <div className={`font-mono text-sm ${sla.errorRateOk ? 'text-success' : 'text-critical'}`}>
-                        {sla.currentErrorRate.toFixed(2)}%
+                        {(sla.currentErrorRate ?? 0).toFixed(2)}%
                       </div>
                     </td>
                     <td><StatusBadge status={sla.status} size="sm" /></td>

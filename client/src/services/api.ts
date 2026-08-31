@@ -138,7 +138,7 @@ api.interceptors.response.use(
 
       if (url.includes('/sla')) {
         return Promise.resolve({
-          data: { slaStatuses: demoSLAList },
+          data: { slaData: demoSLAList, slaStatuses: demoSLAList },
           status: 200,
           statusText: 'OK',
           headers: {},
