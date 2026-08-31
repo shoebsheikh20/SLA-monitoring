@@ -4,7 +4,7 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: npm install && npm run build && npm run seed
+    buildCommand: npm install && npx prisma db push --schema=server/prisma/schema.prisma && npm run build && npm run seed
     startCommand: npm run start
     envVars:
       - key: NODE_ENV
