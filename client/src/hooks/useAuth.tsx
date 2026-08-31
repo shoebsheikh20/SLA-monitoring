@@ -28,11 +28,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUser(me);
           localStorage.setItem('sla_user', JSON.stringify(me));
         })
-        .catch(() => {
-          localStorage.removeItem('sla_token');
-          localStorage.removeItem('sla_user');
-          setToken(null);
-          setUser(null);
+        .catch((err) => {
+          if (err?.response?.status === 401) {
+            localStorage.removeItem('sla_token');
+            localStorage.removeItem('sla_user');
+            setToken(null);
+            setUser(null);
+          }
         })
         .finally(() => setLoading(false));
     } else {
